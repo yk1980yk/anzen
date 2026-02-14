@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+/* ================================
+   基本テーマ変数
+================================ */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* ANZEN ブランドカラー */
+  --anzen-yellow: #FFD700;
+  --anzen-orange: #FF8C00;
+  --anzen-red: #FF0000;
+  --anzen-blue: #007bff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ================================
+   ダークモード
+================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+/* ================================
+   Body
+================================ */
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ================================
+   ★ レベル3危険エリアの点滅アニメーション
+================================ */
+@keyframes dangerPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}
+
+.danger-pulse {
+  animation: dangerPulse 1.8s infinite ease-in-out;
+}
+
+/* Leaflet マーカー点滅補助 */
+.leaflet-marker-icon.danger-pulse {
+  animation: dangerPulse 1.8s infinite ease-in-out;
+}
+
+/* ================================
+   ★ バナー通知フェードイン
+================================ */
+@keyframes bannerFadeIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.notification-banner {
+  animation: bannerFadeIn 0.25s ease-out;
+}
+
+/* ================================
+   ★ ANZEN UI 統一テーマ
+================================ */
+
+/* カード（サイドバー・設定画面） */
+.anzen-card {
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: 0.2s ease;
+}
+
+.anzen-card:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+/* ボタン（現在地ボタンなど） */
+.anzen-button {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(6px);
+  border-radius: 8px;
+  padding: 8px 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border: 1px solid #ddd;
+  transition: 0.15s ease;
+}
+
+.anzen-button:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ポップアップの質感 */
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25) !important;
+}
+
+.leaflet-popup-tip {
+  display: none !important;
+}
+
+/* ================================
+   ★ スマホ用スライドサイドバー
+================================ */
+.sidebar-slide {
+  transition: transform 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+}
+
+.sidebar-hidden {
+  transform: translateX(-100%);
+}
+
+.sidebar-visible {
+  transform: translateX(0);
+}
+
+/* ================================
+   ★ スマホ最適化（UI 最終調整）
+================================ */
+
+/* トップバーの高さ・透明感 */
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(12px);
+}
+
+/* 現在地ボタンの位置（スマホで押しやすい） */
+@media (max-width: 768px) {
+  .locate-button {
+    top: 80px !important;
+    right: 12px !important;
+  }
+}
+
+/* ポップアップの幅・文字の読みやすさ */
+.leaflet-popup-content {
+  max-width: 220px !important;
+  line-height: 1.45;
+  letter-spacing: 0.2px;
+}
+
+/* ================================
+   ★ 共通の影・角丸ユーティリティ
+================================ */
+
+/* 統一された影（小要素） */
+.shadow-soft {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+/* 統一された影（大要素） */
+.shadow-strong {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+/* 統一された角丸 */
+.rounded-soft {
+  border-radius: 8px;
+}
+
+.rounded-popup {
+  border-radius: 10px;
+}
+
+/* ================================
+   ★ 地図 UI の重なり順（最終調整）
+================================ */
+.leaflet-container {
+  z-index: 1;
+}
+
+.topbar,
+.locate-button,
+.notification-banner {
+  z-index: 9999 !important;
+}
