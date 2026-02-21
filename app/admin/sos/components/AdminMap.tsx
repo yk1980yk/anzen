@@ -115,7 +115,7 @@ export default function AdminMap({
     longitude: number;
     radius: number;
     type: string;
-    level: number;
+    level: 1 | 2 | 3 | 4 | 5;
     created_at: string;
   }[];
   dangerInsideMap: Record<string, boolean>;
