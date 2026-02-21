@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getLocation } from "@/app/utils/getLocation";
+import { getLocation } from "@/utils/getLocation";
 import Header from "@/components/Header";
 
 export default function SosNavigation() {

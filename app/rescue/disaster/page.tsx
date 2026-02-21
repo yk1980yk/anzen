@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getLocation } from "@/app/utils/getLocation";
+import { getLocation } from "@/utils/getLocation";
 import { supabase } from "@/lib/supabaseClient";
 import Header from "@/components/Header";
 
