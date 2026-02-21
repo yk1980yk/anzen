@@ -59,11 +59,11 @@ function FlyToPosition({ lat, lng }: { lat: number; lng: number }) {
 // 危険レベル → 色（ANZEN統一）
 // -----------------------------
 const levelColors = {
-  1: "#3b82f6", // 青
-  2: "#22c55e", // 緑
-  3: "#eab308", // 黄
-  4: "#f97316", // オレンジ
-  5: "#ef4444", // 赤
+  1: "#3b82f6",
+  2: "#22c55e",
+  3: "#eab308",
+  4: "#f97316",
+  5: "#ef4444",
 };
 
 // -----------------------------
@@ -128,7 +128,6 @@ export default function AdminMap({
 
   const latest = logs[0];
 
-  // SOSマーカーの色
   const getIcon = (logId: string, mode: string) => {
     if (dangerInsideMap[logId]) return dangerIcon;
     if (mode === "disaster") return redIcon;
@@ -142,7 +141,8 @@ export default function AdminMap({
       zoom={14}
       scrollWheelZoom={true}
       style={{ height: "100%", width: "100%" }}
-      whenCreated={(map) => {
+      whenReady={(event) => {
+        const map = event.target;
         map.on("click", (e: any) => {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
@@ -150,18 +150,13 @@ export default function AdminMap({
         });
       }}
     >
-      {/* タイル */}
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      {/* フォーカス移動 */}
       {focus && <FlyToPosition lat={focus.lat} lng={focus.lng} />}
 
-      {/* -----------------------------
-          危険エリア（レベル色で統一）
-      ----------------------------- */}
       {dangerAreas.map((area) => (
         <Circle
           key={area.id}
@@ -191,7 +186,6 @@ export default function AdminMap({
                 🕒 {new Date(area.created_at).toLocaleString()}
               </p>
 
-              {/* 編集ボタン（ANZEN統一） */}
               <button
                 onClick={() => onEditDangerArea(area)}
                 className="mt-2 px-3 py-2 bg-blue-600 text-white rounded-soft shadow-soft hover:bg-blue-700 transition font-semibold"
@@ -203,9 +197,6 @@ export default function AdminMap({
         </Circle>
       ))}
 
-      {/* -----------------------------
-          SOSマーカー
-      ----------------------------- */}
       {logs.map((log, index) => (
         <Marker
           key={log.id}
