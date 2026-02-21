@@ -10,7 +10,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // -----------------------------
 // マーカーアイコン
@@ -128,6 +128,8 @@ export default function AdminMap({
 
   const latest = logs[0];
 
+  const mapRef = useRef<any>(null);
+
   const getIcon = (logId: string, mode: string) => {
     if (dangerInsideMap[logId]) return dangerIcon;
     if (mode === "disaster") return redIcon;
@@ -141,14 +143,17 @@ export default function AdminMap({
       zoom={14}
       scrollWheelZoom={true}
       style={{ height: "100%", width: "100%" }}
-      whenReady={(event) => {
-        const map = event.target;
+      whenReady={() => {
+        const map = mapRef.current;
+        if (!map) return;
+
         map.on("click", (e: any) => {
           const lat = e.latlng.lat;
           const lng = e.latlng.lng;
           onCreateDangerArea(lat, lng);
         });
       }}
+      ref={mapRef}
     >
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
