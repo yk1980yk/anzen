@@ -130,11 +130,23 @@ export default function AdminMap({
 
   const mapRef = useRef<any>(null);
 
-  const getIcon = (logId: string, mode: string) => {
-    if (dangerInsideMap[logId]) return dangerIcon;
-    if (mode === "disaster") return redIcon;
-    if (mode === "elderly") return yellowIcon;
-    return blueIcon;
+  // -----------------------------
+  // Marker に className を付ける正しい方法（v4対応）
+  // -----------------------------
+  const getIcon = (logId: string, mode: string, isLatest: boolean) => {
+    const baseIcon =
+      dangerInsideMap[logId]
+        ? dangerIcon
+        : mode === "disaster"
+        ? redIcon
+        : mode === "elderly"
+        ? yellowIcon
+        : blueIcon;
+
+    return L.icon({
+      ...baseIcon.options,
+      className: isLatest ? "danger-pulse" : "",
+    });
   };
 
   return (
@@ -206,8 +218,7 @@ export default function AdminMap({
         <Marker
           key={log.id}
           position={[log.lat, log.lng]}
-          icon={getIcon(log.id, log.mode)}
-          className={index === 0 ? "danger-pulse" : ""}
+          icon={getIcon(log.id, log.mode, index === 0)}
           eventHandlers={{
             click: () => onMarkerClick(log.id),
           }}
