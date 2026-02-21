@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 const MiniMap = dynamic(() => import("./MiniMap"), { ssr: false });
 
 // 一覧ページ用の地図（SSR無効）
-const MapViewList = dynamic(() => import("@/components/MapViewList"), {
+const MapViewList = dynamic(() => import("@/dashboard/danger-areas/MapViewList"), {
   ssr: false,
 });
 
