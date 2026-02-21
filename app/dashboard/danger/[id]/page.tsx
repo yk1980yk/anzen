@@ -14,7 +14,7 @@ type DangerArea = {
   id: string;
   title: string;
   description: string;
-  level: number;
+  level: 1 | 2 | 3 | 4 | 5;   // ← 修正済み
   latitude: number;
   longitude: number;
   created_at: string;
