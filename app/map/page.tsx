@@ -4,17 +4,15 @@ import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import dynamic from 'next/dynamic'
 
-// ★ 地図コンポーネント
+// ★ Leaflet版の地図
 const PublicMap = dynamic(() => import('./publicMap'), { ssr: false })
 
 export default function PublicMapPage() {
   const [areas, setAreas] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // ★ 検索用 state
   const [searchText, setSearchText] = useState('')
   const [filterLevel, setFilterLevel] = useState('all')
-
   const [selectedArea, setSelectedArea] = useState(null)
 
   useEffect(() => {
@@ -33,7 +31,6 @@ export default function PublicMapPage() {
     fetchAreas()
   }, [])
 
-  // ★ フィルタリング処理（リアルタイム）
   const filteredAreas = useMemo(() => {
     return areas.filter((area) => {
       const matchText =
@@ -46,18 +43,15 @@ export default function PublicMapPage() {
     })
   }, [areas, searchText, filterLevel])
 
-  if (loading) {
-    return <p className="p-8">読み込み中...</p>
-  }
+  if (loading) return <p className="p-8">読み込み中...</p>
 
   return (
     <div className="flex h-screen w-screen">
 
-      {/* ★ 左側：サイドバー */}
+      {/* 左側：サイドバー */}
       <div className="w-80 border-r overflow-y-auto p-4 bg-white">
         <h2 className="text-xl font-bold mb-4">危険エリア検索</h2>
 
-        {/* ★ タイトル検索 */}
         <input
           type="text"
           placeholder="タイトル検索"
@@ -66,7 +60,6 @@ export default function PublicMapPage() {
           className="w-full border px-3 py-2 rounded mb-3"
         />
 
-        {/* ★ レベル絞り込み */}
         <select
           value={filterLevel}
           onChange={(e) => setFilterLevel(e.target.value)}
@@ -99,7 +92,7 @@ export default function PublicMapPage() {
         ))}
       </div>
 
-      {/* ★ 右側：地図 */}
+      {/* 右側：地図 */}
       <div className="flex-1">
         <PublicMap areas={filteredAreas} selectedArea={selectedArea} />
       </div>

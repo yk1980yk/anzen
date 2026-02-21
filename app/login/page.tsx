@@ -1,61 +1,75 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    setLoading(true)
-    setError('')
+    setError("");
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password
-    })
+      password,
+    });
 
     if (error) {
-      setError(error.message)
+      setError("メールアドレスまたはパスワードが違います");
     } else {
-      window.location.href = '/dashboard'
+      router.push("/user-map");
     }
-
-    setLoading(false)
-  }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">ANZEN 管理者ログイン</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-white">
 
-      <input
-        type="email"
-        placeholder="メールアドレス"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="mb-2 px-4 py-2 border rounded w-80"
-      />
+      {/* ロゴ */}
+      <div className="mb-10 text-center">
+        <img src="/logo.png" alt="ANZEN" className="w-20 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold text-gray-800">ANZEN</h1>
+        <p className="text-gray-600 mt-2">ログインして安全を守ろう</p>
+      </div>
 
-      <input
-        type="password"
-        placeholder="パスワード"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="mb-2 px-4 py-2 border rounded w-80"
-      />
+      {/* カード */}
+      <div className="anzen-card w-full max-w-sm space-y-4">
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+        <input
+          type="email"
+          placeholder="メールアドレス"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full border px-4 py-2 rounded-soft shadow-soft"
+        />
 
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        className="bg-blue-500 text-white px-4 py-2 rounded w-80"
-      >
-        {loading ? 'ログイン中...' : 'ログイン'}
-      </button>
+        <input
+          type="password"
+          placeholder="パスワード"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full border px-4 py-2 rounded-soft shadow-soft"
+        />
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button onClick={handleLogin} className="anzen-btn-primary">
+          ログイン
+        </button>
+
+        <button
+          onClick={() => router.push("/signup")}
+          className="anzen-btn-secondary"
+        >
+          新規登録はこちら
+        </button>
+
+      </div>
+
     </div>
-  )
+  );
 }

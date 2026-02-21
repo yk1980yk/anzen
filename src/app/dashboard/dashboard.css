@@ -1,0 +1,42 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f9fc;
+  font-family: sans-serif;
+}
+
+.sidebar {
+  width: 240px;
+  background: #0a3d62;
+  color: white;
+  padding: 24px;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 24px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-item {
+  color: white;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px;
+}

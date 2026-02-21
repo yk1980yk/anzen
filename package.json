@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "@turf/turf": "^7.3.4",
     "leaflet": "^1.9.4",
     "next": "^15.5.12",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0"

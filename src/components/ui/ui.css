@@ -1,0 +1,56 @@
+/* Button */
+.ui-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.2s;
+  color: white;
+}
+
+.ui-button.primary {
+  background: #0070f3;
+}
+
+.ui-button.secondary {
+  background: #555;
+}
+
+.ui-button.danger {
+  background: #e63946;
+}
+
+.ui-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Card */
+.ui-card {
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 12px;
+}
+
+/* Input */
+.ui-input-wrapper {
+  margin-bottom: 16px;
+}
+
+.ui-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.ui-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}

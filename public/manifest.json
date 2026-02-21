@@ -1,0 +1,16 @@
+{
+  "name": "ANZEN",
+  "short_name": "ANZEN",
+  "description": "ANZEN ユーザーアプリ",
+  "start_url": "/splash",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1E90FF",
+  "icons": [
+    {
+      "src": "/logos/logo-splash.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

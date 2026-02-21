@@ -93,37 +93,64 @@ function FlyToSelected({ selectedArea }) {
 }
 
 /* ============================================================
-   現在地ボタン
+   ★ 地図ロジック（追従モード・ドラッグ停止）
 ============================================================ */
-function LocateButton({ setUserLocation }) {
+function MapLogic({ userLocation, setUserLocation, isFollowing, setIsFollowing }) {
   const map = useMap()
 
-  const handleLocate = () => {
-    if (!navigator.geolocation) {
-      alert('位置情報が利用できません')
-      return
-    }
+  /* --- 地図ドラッグで追従停止 --- */
+  useEffect(() => {
+    if (!map) return
 
-    navigator.geolocation.getCurrentPosition(
+    const stopFollowing = () => setIsFollowing(false)
+    map.on("dragstart", stopFollowing)
+
+    return () => map.off("dragstart", stopFollowing)
+  }, [map])
+
+  /* --- 現在地追従 --- */
+  useEffect(() => {
+    if (!navigator.geolocation) return
+
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords
         setUserLocation({ latitude, longitude })
-        map.setView([latitude, longitude], 16)
+
+        if (isFollowing && map) {
+          map.setView([latitude, longitude])
+        }
       },
-      () => {
-        alert('位置情報の取得に失敗しました')
-      }
+      () => {},
+      { enableHighAccuracy: true }
     )
+
+    return () => navigator.geolocation.clearWatch(watchId)
+  }, [map, isFollowing])
+
+  return null
+}
+
+/* ============================================================
+   現在地ボタン（追従再開）
+============================================================ */
+function LocateButton({ setUserLocation, setIsFollowing }) {
+  const map = useMap()
+
+  const handleLocate = () => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude, longitude } = pos.coords
+      setUserLocation({ latitude, longitude })
+
+      setIsFollowing(true)
+      map.setView([latitude, longitude], 16)
+    })
   }
 
   return (
     <button
       onClick={handleLocate}
-      className="
-        anzen-button
-        absolute top-20 right-4
-        z-[9999]
-      "
+      className="anzen-button absolute top-20 right-4 z-[9999]"
     >
       現在地
     </button>
@@ -142,7 +169,6 @@ export default function PublicMap({ areas, selectedArea }) {
   const [bannerMessage, setBannerMessage] = useState('')
   const [bannerLevel, setBannerLevel] = useState(1)
 
-  // ★ 設定
   const [settings, setSettings] = useState({
     notificationsEnabled: true,
     soundEnabled: true,
@@ -151,39 +177,30 @@ export default function PublicMap({ areas, selectedArea }) {
     level3: true,
   })
 
-  // ★ 初回ロード時に設定を読み込む
   useEffect(() => {
     const saved = localStorage.getItem('anzen-settings')
-    if (saved) {
-      setSettings(JSON.parse(saved))
-    }
+    if (saved) setSettings(JSON.parse(saved))
   }, [])
 
-  /* ------------------------------
-     現在地を監視
-  ------------------------------ */
-  useEffect(() => {
-    if (!navigator.geolocation) return
+  /* --- 追従モード --- */
+  const [isFollowing, setIsFollowing] = useState(true)
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords
-        setUserLocation({ latitude, longitude })
-      },
-      () => {},
-      { enableHighAccuracy: true }
-    )
+  /* ============================================================
+     ★ 表示時刻フィルタ（未来の投稿は非表示）
+  ============================================================ */
+  const now = new Date()
+  const visibleAreas = areas.filter((area) => {
+    if (!area.display_time) return true
+    return new Date(area.display_time) <= now
+  })
 
-    return () => navigator.geolocation.clearWatch(watchId)
-  }, [])
-
-  /* ------------------------------
-     危険エリアとの距離判定
-  ------------------------------ */
+  /* ============================================================
+     危険エリアとの距離判定（通知）
+  ============================================================ */
   useEffect(() => {
     if (!userLocation) return
 
-    areas.forEach((area) => {
+    visibleAreas.forEach((area) => {
       const distance = calcDistance(
         userLocation.latitude,
         userLocation.longitude,
@@ -191,10 +208,7 @@ export default function PublicMap({ areas, selectedArea }) {
         area.longitude
       )
 
-      // ★ 通知OFFなら何もしない
       if (!settings.notificationsEnabled) return
-
-      // ★ レベル別通知OFFならスキップ
       if (area.level === 1 && !settings.level1) return
       if (area.level === 2 && !settings.level2) return
       if (area.level === 3 && !settings.level3) return
@@ -202,14 +216,10 @@ export default function PublicMap({ areas, selectedArea }) {
       if (distance <= area.radius && !notifiedAreas.includes(area.id)) {
         let message = ''
 
-        if (area.level === 1) {
-          message = `注意: ${area.title} の近くにいます`
-        } else if (area.level === 2) {
-          message = `⚠ 警告: ${area.title} に接近しています`
-        } else if (area.level === 3) {
+        if (area.level === 1) message = `注意: ${area.title} の近くにいます`
+        if (area.level === 2) message = `⚠ 警告: ${area.title} に接近しています`
+        if (area.level === 3) {
           message = `🚨 緊急: ${area.title} の危険エリアに侵入しました`
-
-          // ★ 音ONのときだけ鳴らす
           if (settings.soundEnabled) {
             const audio = new Audio('/alert.mp3')
             audio.play().catch(() => {})
@@ -223,7 +233,7 @@ export default function PublicMap({ areas, selectedArea }) {
         setNotifiedAreas((prev) => [...prev, area.id])
       }
     })
-  }, [userLocation, areas, notifiedAreas, settings])
+  }, [userLocation, visibleAreas, notifiedAreas, settings])
 
   /* ============================================================
      レンダリング
@@ -245,7 +255,19 @@ export default function PublicMap({ areas, selectedArea }) {
 
         <FlyToSelected selectedArea={selectedArea} />
 
-        <LocateButton setUserLocation={setUserLocation} />
+        {/* ★ 追従モードロジック */}
+        <MapLogic
+          userLocation={userLocation}
+          setUserLocation={setUserLocation}
+          isFollowing={isFollowing}
+          setIsFollowing={setIsFollowing}
+        />
+
+        {/* ★ 現在地ボタン */}
+        <LocateButton
+          setUserLocation={setUserLocation}
+          setIsFollowing={setIsFollowing}
+        />
 
         {/* 現在地 */}
         {userLocation && (
@@ -267,8 +289,8 @@ export default function PublicMap({ areas, selectedArea }) {
           </>
         )}
 
-        {/* 危険エリア */}
-        {areas.map((area) => {
+        {/* 危険エリア（★ visibleAreas を使用） */}
+        {visibleAreas.map((area) => {
           const levelColor = getLevelColor(area.level)
           const isDanger = area.level === 3
 
