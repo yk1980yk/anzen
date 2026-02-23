@@ -15,14 +15,17 @@ export default function PrimaryButton({
     primary: {
       background: "#1976D2", // ANZENブルー
       color: "white",
+      border: "none",
     },
     danger: {
       background: "#E53935", // 災害モード赤
       color: "white",
+      border: "none",
     },
     elderly: {
       background: "linear-gradient(135deg, #F5A623, #F76B1C)", // 高齢者オレンジ
       color: "white",
+      border: "none",
     },
     white: {
       background: "white",
@@ -41,7 +44,7 @@ export default function PrimaryButton({
         boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         background: colors[variant].background,
         color: colors[variant].color,
-        border: colors[variant].border || "none",
+        border: colors[variant].border,
         ...style,
       }}
     >
