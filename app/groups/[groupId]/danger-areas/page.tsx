@@ -26,11 +26,12 @@ export default function DangerAreasPage() {
   const params = useParams();
   const groupId = params.groupId as string;
 
-  const [areas, setAreas] = useState([]);
+  // ★ 型を追加（never[] → any[] に修正）
+  const [areas, setAreas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ★ 表示フィルタ（デフォルト：全部 ON）
-  const [visibleLevels, setVisibleLevels] = useState([1, 2, 3, 4, 5]);
+  // ★ 表示フィルタ（型を追加）
+  const [visibleLevels, setVisibleLevels] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const router = useRouter();
 
@@ -43,7 +44,7 @@ export default function DangerAreasPage() {
       .order("created_at", { ascending: false });
 
     if (!error) {
-      setAreas(data);
+      setAreas(data || []);
     }
 
     setLoading(false);
@@ -64,7 +65,7 @@ export default function DangerAreasPage() {
         <MapViewList dangerAreas={areas} visibleLevels={visibleLevels} />
       </div>
 
-      {/* ★ 表示フィルタ（ユーザー向け） */}
+      {/* ★ 表示フィルタ */}
       <div className="flex flex-wrap gap-3 mt-4">
         {[1, 2, 3, 4, 5].map((level) => (
           <label key={level} className="flex items-center gap-2">
@@ -170,7 +171,7 @@ export default function DangerAreasPage() {
         </ul>
       )}
 
-      {/* 新規作成ボタン（固定） */}
+      {/* 新規作成ボタン */}
       <button
         onClick={() =>
           router.push(`/groups/${groupId}/danger-areas/new`)
