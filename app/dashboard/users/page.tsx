@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 
 // ★ カードの色（将来の権限管理にも対応）
-const getRoleStyle = (role) => {
+const getRoleStyle = (role: "admin" | "user" | string) => {
   switch (role) {
     case 'admin':
       return 'border-purple-300 bg-purple-50'
@@ -17,7 +17,7 @@ const getRoleStyle = (role) => {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   // ★ ユーザー一覧取得
@@ -29,7 +29,7 @@ export default function UsersPage() {
         .order('created_at', { ascending: false })
 
       if (!error) {
-        setUsers(data)
+        setUsers(data || [])
       }
 
       setLoading(false)
