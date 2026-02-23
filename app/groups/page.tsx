@@ -4,9 +4,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
+type Group = {
+  id: string;
+  name: string;
+  description?: string;
+  invite_code: string;
+  type?: string;
+};
+
 export default function GroupsPage() {
   const router = useRouter();
-  const [groups, setGroups] = useState<any[]>([]);
+
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,75 +24,59 @@ export default function GroupsPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        setLoading(false);
         return;
       }
 
       const { data: memberData } = await supabase
         .from("group_members")
-        .select("group:groups(*), role")
+        .select("*, group:groups(*)")
         .eq("user_id", user.id);
 
       const uniqueGroups =
         memberData
-          ?.map((m) => m.group)
-          .filter((g, i, arr) => g && arr.findIndex((x) => x.id === g.id) === i) || [];
+          ?.map((m) => m.group as Group)
+          .filter(
+            (g, i, arr) =>
+              g && arr.findIndex((x) => x.id === g.id) === i
+          ) || [];
 
       setGroups(uniqueGroups);
       setLoading(false);
     };
 
     fetchGroups();
-  }, [router]);
+  }, []);
 
-  if (loading) return <p style={{ padding: 20 }}>読み込み中...</p>;
+  if (loading) return <p className="p-6">読み込み中...</p>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>グループ一覧</h1>
-
-      <div style={{ marginBottom: 20 }}>
-        <button
-          onClick={() => router.push("/groups/new")}
-          style={{ marginRight: 10 }}
-        >
-          ＋ 新しいグループを作成
-        </button>
-        <button onClick={() => router.push("/join")}>招待コードで参加</button>
-      </div>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">参加中のグループ</h1>
 
       {groups.length === 0 ? (
-        <p>まだグループがありません。</p>
+        <p>まだグループに参加していません。</p>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-            gap: 16,
-          }}
-        >
+        <ul className="space-y-4">
           {groups.map((g) => (
-            <div
+            <li
               key={g.id}
+              className="border p-4 rounded shadow-sm cursor-pointer hover:bg-gray-50"
               onClick={() => router.push(`/groups/${g.id}`)}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                padding: 16,
-                cursor: "pointer",
-              }}
             >
-              <h2 style={{ margin: "0 0 8px" }}>
-                {g.name || "名前未設定のグループ"}
-              </h2>
-              <p style={{ margin: "0 0 4px" }}>タイプ：{g.type}</p>
-              <p style={{ margin: 0, fontSize: 12, color: "#666" }}>
-                ID: {g.id}
-              </p>
-            </div>
+              <h2 className="text-xl font-semibold">{g.name}</h2>
+              <p className="text-gray-600">{g.description}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
+
+      <button
+        onClick={() => router.push("/groups/new")}
+        className="fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg"
+      >
+        ＋ 新規グループ
+      </button>
     </div>
   );
 }
