@@ -13,7 +13,7 @@ const MapViewList = dynamic(() => import("@/dashboard/danger-areas/MapViewList")
   ssr: false,
 });
 
-// DangerArea 型を定義
+// ★ DangerArea 型（MapViewList と完全に一致させる）
 type DangerArea = {
   id: string;
   title: string;
@@ -21,13 +21,14 @@ type DangerArea = {
   latitude: number;
   longitude: number;
   radius: number;
-  level: 1 | 2 | 3 | 4 | 5;
+  level: number;
+  city: string; // ← これが必須
   created_at: string;
   group_id: string;
 };
 
-// 危険レベルの色（カード & バッジ共通）
-const levelColors: Record<1 | 2 | 3 | 4 | 5, string> = {
+// 危険レベルの色
+const levelColors: Record<number, string> = {
   1: "bg-blue-100 text-blue-700 border-blue-300",
   2: "bg-green-100 text-green-700 border-green-300",
   3: "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -39,16 +40,13 @@ export default function DangerAreasPage() {
   const params = useParams();
   const groupId = params.groupId as string;
 
-  // ★ 型を DangerArea[] に変更
   const [areas, setAreas] = useState<DangerArea[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ★ 表示フィルタ（型を追加）
   const [visibleLevels, setVisibleLevels] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const router = useRouter();
 
-  // 一覧取得（group_id で絞る）
   const fetchAreas = async () => {
     const { data, error } = await supabase
       .from("danger_areas")
@@ -73,12 +71,12 @@ export default function DangerAreasPage() {
     <div className="space-y-6 pb-20">
       <h1 className="text-2xl font-bold">危険エリア一覧</h1>
 
-      {/* 地図（一覧表示用） */}
+      {/* 地図 */}
       <div className="w-full h-[400px] rounded overflow-hidden">
         <MapViewList dangerAreas={areas} visibleLevels={visibleLevels} />
       </div>
 
-      {/* ★ 表示フィルタ */}
+      {/* フィルタ */}
       <div className="flex flex-wrap gap-3 mt-4">
         {[1, 2, 3, 4, 5].map((level) => (
           <label key={level} className="flex items-center gap-2">
@@ -109,7 +107,6 @@ export default function DangerAreasPage() {
               className={`border rounded shadow-sm p-4 ${levelColors[area.level]}`}
             >
               <div className="flex flex-col md:flex-row gap-4">
-                {/* ミニマップ */}
                 <div className="w-full md:w-1/3">
                   <MiniMap
                     latitude={area.latitude}
@@ -119,7 +116,6 @@ export default function DangerAreasPage() {
                   />
                 </div>
 
-                {/* 情報 */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center gap-3">
@@ -134,7 +130,6 @@ export default function DangerAreasPage() {
                         {area.title}
                       </h2>
 
-                      {/* 危険レベルバッジ */}
                       <span className="px-2 py-1 text-xs font-bold bg-white border rounded">
                         レベル {area.level}
                       </span>
@@ -146,6 +141,7 @@ export default function DangerAreasPage() {
                       <p>緯度: {area.latitude}</p>
                       <p>経度: {area.longitude}</p>
                       <p>範囲: {area.radius}m</p>
+                      <p>都市: {area.city}</p>
                     </div>
                   </div>
 
@@ -184,7 +180,6 @@ export default function DangerAreasPage() {
         </ul>
       )}
 
-      {/* 新規作成ボタン */}
       <button
         onClick={() =>
           router.push(`/groups/${groupId}/danger-areas/new`)
