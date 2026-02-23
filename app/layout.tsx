@@ -1,5 +1,6 @@
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { ReactNode } from "react";
 import { Noto_Sans_JP } from "next/font/google";
 import Header from "./components/Header";
 
@@ -22,19 +23,13 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="ja" style={{ height: "100%", margin: 0, padding: 0 }}>
-      <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
-        <meta name="apple-mobile-web-app-title" content="ANZEN" />
-        <link rel="manifest" href="/manifest.json" />
-      </head>
-
       <body
         className={noto.className}
         style={{
@@ -45,7 +40,6 @@ export default function RootLayout({ children }) {
           flexDirection: "column",
         }}
       >
-        {/* Header はそのまま */}
         <Header title="ANZEN" />
 
         <main
