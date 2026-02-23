@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useParams } from "next/navigation";
+import { QRCodeCanvas } from "qrcode.react"; // ← これが今回の重要ポイント！
 
 export default function GroupDetailPage() {
   const router = useRouter();
@@ -139,6 +140,7 @@ export default function GroupDetailPage() {
         QRコードを表示
       </button>
 
+      {/* QRコードモーダル */}
       {showQR && (
         <div
           style={{
@@ -169,6 +171,7 @@ export default function GroupDetailPage() {
         </div>
       )}
 
+      {/* 名前編集モーダル */}
       {showEditName && (
         <div
           style={{
