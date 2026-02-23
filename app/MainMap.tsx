@@ -73,8 +73,12 @@ export default function MainMap() {
         center={position}
         zoom={16}
         style={anzenMapStyle}
-        whenReady={(map) => {
-          mapRef.current = map.target;
+        whenReady={() => {
+          // whenReady の中で map インスタンスを取得
+          const map = (window as any).L?.map || null;
+          if (!mapRef.current && map) {
+            mapRef.current = map;
+          }
         }}
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
