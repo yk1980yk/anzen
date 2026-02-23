@@ -73,11 +73,11 @@ export default function MainMap() {
         center={position}
         zoom={16}
         style={anzenMapStyle}
-        whenCreated={(map) => (mapRef.current = map)}
+        whenReady={(map) => {
+          mapRef.current = map.target;
+        }}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         {/* 現在地 */}
         <Marker position={position} icon={currentLocationIcon} />
@@ -89,10 +89,10 @@ export default function MainMap() {
             position={[area.latitude, area.longitude]}
             icon={dangerIcon}
             eventHandlers={{
-              click: () => router.push(`/dashboard/danger-areas/${area.id}/edit`),
+              click: () =>
+                router.push(`/dashboard/danger-areas/${area.id}/edit`),
             }}
-          >
-          </Marker>
+          />
         ))}
 
         {/* Danger Area の範囲 */}
