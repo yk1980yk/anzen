@@ -3,10 +3,20 @@
 import { MapContainer, TileLayer, Circle } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-export default function MiniMap({ latitude, longitude, radius, level }) {
-  const center = [latitude, longitude];
+export default function MiniMap({
+  latitude,
+  longitude,
+  radius,
+  level,
+}: {
+  latitude: number;
+  longitude: number;
+  radius: number;
+  level: number;
+}) {
+  const center: [number, number] = [latitude, longitude];
 
-  const levelColors = {
+  const levelColors: Record<number, string> = {
     1: "#FFD700",
     2: "#FF8C00",
     3: "#FF4500",
