@@ -13,8 +13,21 @@ const MapViewList = dynamic(() => import("@/dashboard/danger-areas/MapViewList")
   ssr: false,
 });
 
+// DangerArea 型を定義
+type DangerArea = {
+  id: string;
+  title: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  level: 1 | 2 | 3 | 4 | 5;
+  created_at: string;
+  group_id: string;
+};
+
 // 危険レベルの色（カード & バッジ共通）
-const levelColors = {
+const levelColors: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: "bg-blue-100 text-blue-700 border-blue-300",
   2: "bg-green-100 text-green-700 border-green-300",
   3: "bg-yellow-100 text-yellow-700 border-yellow-300",
@@ -26,8 +39,8 @@ export default function DangerAreasPage() {
   const params = useParams();
   const groupId = params.groupId as string;
 
-  // ★ 型を追加（never[] → any[] に修正）
-  const [areas, setAreas] = useState<any[]>([]);
+  // ★ 型を DangerArea[] に変更
+  const [areas, setAreas] = useState<DangerArea[]>([]);
   const [loading, setLoading] = useState(true);
 
   // ★ 表示フィルタ（型を追加）
@@ -44,7 +57,7 @@ export default function DangerAreasPage() {
       .order("created_at", { ascending: false });
 
     if (!error) {
-      setAreas(data || []);
+      setAreas((data || []) as DangerArea[]);
     }
 
     setLoading(false);
