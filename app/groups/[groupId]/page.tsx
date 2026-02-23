@@ -1,26 +1,24 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { QRCodeCanvas } from "qrcode.react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
-export default function GroupDetailPage({ params }: any) {
-  // Next.js 15: params は use() で unwrap する
-  const { groupId } = use(params);
+export default function GroupDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const groupId = params.groupId as string;
 
   const [group, setGroup] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [copied, setCopied] = useState(false);
   const [showQR, setShowQR] = useState(false);
 
-  // 名前編集
   const [showEditName, setShowEditName] = useState(false);
   const [newName, setNewName] = useState("");
 
-  // ログイン中のユーザー
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
@@ -70,7 +68,6 @@ export default function GroupDetailPage({ params }: any) {
     setShowEditName(false);
   };
 
-  // 役割変更
   const toggleRole = async (member: any) => {
     const newRole = member.role === "parent" ? "child" : "parent";
 
@@ -86,26 +83,18 @@ export default function GroupDetailPage({ params }: any) {
     );
   };
 
-  // メンバー削除
   const removeMember = async (member: any) => {
     await supabase.from("group_members").delete().eq("id", member.id);
-
     setMembers(members.filter((m) => m.id !== member.id));
   };
 
-  // グループ削除
   const deleteGroup = async () => {
-    const confirmDelete = window.confirm(
-      "本当にこのグループを削除しますか？（元に戻せません）"
-    );
-    if (!confirmDelete) return;
+    if (!confirm("本当にこのグループを削除しますか？")) return;
 
     await supabase.from("groups").delete().eq("id", groupId);
-
     router.push("/groups");
   };
 
-  // 現在のユーザーが parent かどうか
   const isCurrentUserParent = members.some(
     (m) => m.user_id === currentUser?.id && m.role === "parent"
   );
@@ -150,7 +139,6 @@ export default function GroupDetailPage({ params }: any) {
         QRコードを表示
       </button>
 
-      {/* QRコードモーダル */}
       {showQR && (
         <div
           style={{
@@ -181,7 +169,6 @@ export default function GroupDetailPage({ params }: any) {
         </div>
       )}
 
-      {/* 名前編集モーダル */}
       {showEditName && (
         <div
           style={{
@@ -233,7 +220,6 @@ export default function GroupDetailPage({ params }: any) {
           <li key={m.id} style={{ marginBottom: 8 }}>
             {m.user?.email || "ユーザー"}（{m.role}）
 
-            {/* 役割変更 */}
             <button
               onClick={() => toggleRole(m)}
               style={{ marginLeft: 10 }}
@@ -241,7 +227,6 @@ export default function GroupDetailPage({ params }: any) {
               役割を変更
             </button>
 
-            {/* 削除（parent だけ、かつ自分以外） */}
             {isCurrentUserParent && m.user_id !== currentUser?.id && (
               <button
                 onClick={() => removeMember(m)}
@@ -254,7 +239,6 @@ export default function GroupDetailPage({ params }: any) {
         ))}
       </ul>
 
-      {/* グループ削除 */}
       {isCurrentUserParent && (
         <button
           onClick={deleteGroup}
