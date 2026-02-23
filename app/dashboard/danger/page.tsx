@@ -12,7 +12,7 @@ type DangerArea = {
   longitude: number;
   radius: number;
   type: string;
-  level: number;
+  level: 1 | 2 | 3 | 4 | 5;   // ← 修正済み
   created_at: string;
 };
 

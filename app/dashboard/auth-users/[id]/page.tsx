@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useParams, useRouter } from "next/navigation";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 type AuthUser = {
   id: string;
@@ -16,11 +11,8 @@ type AuthUser = {
   last_sign_in_at: string | null;
 };
 
-export default function AuthUserDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-
-  const [user, setUser] = useState<AuthUser | null>(null);
+export default function AuthUserListPage() {
+  const [users, setUsers] = useState<AuthUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 通知バナー
@@ -36,53 +28,30 @@ export default function AuthUserDetailPage() {
   };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data, error } = await supabase.auth.admin.getUserById(id);
+    const fetchUsers = async () => {
+      const { data, error } = await supabase.auth.admin.listUsers();
 
-      if (!error && data?.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email,
-          created_at: data.user.created_at,
-          last_sign_in_at: data.user.last_sign_in_at,
-        });
+      if (error) {
+        showNotification("ユーザー取得に失敗しました", "error");
+      } else if (data?.users) {
+        const formatted = data.users.map((u) => ({
+          id: u.id,
+          email: u.email ?? null,                 // ← ★ 修正
+          created_at: u.created_at,
+          last_sign_in_at: u.last_sign_in_at ?? null, // ← ★ 修正
+        }));
+
+        setUsers(formatted);
       }
 
       setLoading(false);
     };
 
-    fetchUser();
-  }, [id]);
-
-  // Edge Function を呼び出す削除処理
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm("本当に削除しますか？");
-    if (!confirmDelete) return;
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/auth-user-delete`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: id }),
-      }
-    );
-
-    const result = await res.json();
-
-    if (result.success) {
-      showNotification("ユーザーを削除しました", "success");
-      setTimeout(() => router.push("/dashboard/auth-users"), 800);
-    } else {
-      showNotification("削除に失敗しました: " + result.error, "error");
-    }
-  };
-
-  if (loading) return <p className="px-6 py-8">読み込み中...</p>;
-  if (!user) return <p className="px-6 py-8">ユーザーが見つかりません。</p>;
+    fetchUsers();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-8 max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 px-6 py-8 space-y-6">
 
       {/* 通知バナー */}
       {showBanner && (
@@ -95,39 +64,46 @@ export default function AuthUserDetailPage() {
         </div>
       )}
 
-      <h1 className="text-2xl font-bold">Authユーザー詳細</h1>
-
-      <div className="border p-5 rounded-soft bg-white shadow-soft space-y-4">
-
-        <p className="text-lg font-semibold">{user.email}</p>
-
-        <div className="text-sm text-gray-600 space-y-1">
-          <p>ユーザーID: {user.id}</p>
-          <p>作成日: {new Date(user.created_at).toLocaleString()}</p>
-          <p>
-            最終ログイン:{" "}
-            {user.last_sign_in_at
-              ? new Date(user.last_sign_in_at).toLocaleString()
-              : "未ログイン"}
-          </p>
-        </div>
-
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={handleDelete}
-            className="bg-red-600 text-white px-4 py-3 rounded-soft shadow-soft hover:bg-red-700 transition font-semibold"
-          >
-            削除
-          </button>
-
-          <button
-            onClick={() => router.push("/dashboard/auth-users")}
-            className="bg-gray-500 text-white px-4 py-3 rounded-soft shadow-soft hover:bg-gray-600 transition font-semibold"
-          >
-            戻る
-          </button>
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Authユーザー一覧</h1>
       </div>
+
+      {loading ? (
+        <p>読み込み中...</p>
+      ) : users.length === 0 ? (
+        <p className="text-gray-500">ユーザーがいません。</p>
+      ) : (
+        <div className="space-y-4">
+          {users.map((user) => (
+            <div
+              key={user.id}
+              className="bg-white p-5 rounded-soft shadow-soft border border-gray-200"
+            >
+              <p className="text-lg font-bold">{user.email}</p>
+
+              <p className="text-sm text-gray-600 mt-1">
+                作成日: {new Date(user.created_at).toLocaleString()}
+              </p>
+
+              <p className="text-sm text-gray-600">
+                最終ログイン:{" "}
+                {user.last_sign_in_at
+                  ? new Date(user.last_sign_in_at).toLocaleString()
+                  : "未ログイン"}
+              </p>
+
+              <div className="flex gap-3 mt-4">
+                <Link
+                  href={`/dashboard/auth-users/${user.id}`}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-soft shadow-soft hover:bg-blue-700 transition text-sm font-semibold"
+                >
+                  詳細
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

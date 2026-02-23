@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 // 型定義
@@ -21,7 +22,7 @@ type DangerArea = {
   longitude: number;
   radius: number;
   type: string;
-  level: number;
+  level: 1 | 2 | 3 | 4 | 5;
   created_at: string;
 };
 
@@ -236,6 +237,13 @@ export default function AdminSOS() {
       )}
 
       <h1 className="text-3xl font-bold">📡 SOSリアルタイム監視</h1>
+
+      {/* ★ ルート再生ボタン追加 */}
+      <Link href="/route-playback">
+        <button className="w-full py-4 bg-blue-600 text-white rounded-soft shadow-soft text-lg font-bold hover:bg-blue-700 transition">
+          ▶ ルート再生を見る
+        </button>
+      </Link>
 
       {/* 地図 */}
       <div className="w-full h-[40vh] rounded-soft overflow-hidden shadow-strong bg-white">

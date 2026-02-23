@@ -6,6 +6,23 @@ import L from "leaflet";
 import { useRouter, useParams } from "next/navigation";
 import { getCityCategory } from "@/lib/cityCategory";
 
+// -----------------------------
+// ★ 型定義（これが今回のエラーの原因）
+// -----------------------------
+type DangerArea = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  level: number;
+  city: string;
+};
+
+type MapViewListProps = {
+  dangerAreas: DangerArea[];
+  visibleLevels: number[];
+};
+
 // ANZEN ピンアイコン
 const AnzenIcon = L.icon({
   iconUrl: "/icons/app-icon.png",
@@ -14,7 +31,7 @@ const AnzenIcon = L.icon({
 });
 
 // 危険レベルごとの色
-const getLevelColor = (level) => {
+const getLevelColor = (level: number) => {
   switch (level) {
     case 1:
       return { color: "#FFD700", fillColor: "#FFD700" };
@@ -31,13 +48,16 @@ const getLevelColor = (level) => {
   }
 };
 
-export default function MapViewList({ dangerAreas, visibleLevels }) {
+export default function MapViewList({
+  dangerAreas,
+  visibleLevels,
+}: MapViewListProps) {
   const router = useRouter();
   const params = useParams();
   const groupId = params.groupId as string;
 
   // 地図の中心（最初のエリア or 東京駅）
-  const center = dangerAreas.length
+  const center: [number, number] = dangerAreas.length
     ? [dangerAreas[0].latitude, dangerAreas[0].longitude]
     : [35.681236, 139.767125];
 
@@ -73,7 +93,7 @@ export default function MapViewList({ dangerAreas, visibleLevels }) {
                   }}
                 />
 
-                {/* 危険範囲の円（都市カテゴリーで揺れ幅が変わる） */}
+                {/* 危険範囲の円 */}
                 <Circle
                   center={[area.latitude, area.longitude]}
                   radius={area.radius}

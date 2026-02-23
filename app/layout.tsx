@@ -1,5 +1,7 @@
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 import { Noto_Sans_JP } from "next/font/google";
+import Header from "./components/Header";
 
 const noto = Noto_Sans_JP({
   subsets: ["latin"],
@@ -11,36 +13,52 @@ export const metadata = {
   description:
     "ANZEN は、危険エリアの共有・通知・地図表示を通じて、あなたの安全を守るためのコミュニティアプリです。",
   keywords: ["ANZEN", "安全", "防犯", "危険エリア", "地図", "通知"],
-  openGraph: {
-    title: "ANZEN - あなたの安全を、いつでもどこでも",
-    description:
-      "危険エリアの共有・通知・地図表示を通じて、あなたの安全を守るアプリ。",
-    url: "https://your-domain.com",
-    siteName: "ANZEN",
-    images: [
-      {
-        url: "/ogp.png",
-        width: 1200,
-        height: 630,
-        alt: "ANZEN OGP Image",
-      },
-    ],
-    locale: "ja_JP",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "ANZEN - あなたの安全を、いつでもどこでも",
-    description:
-      "危険エリアの共有・通知・地図表示を通じて、あなたの安全を守るアプリ。",
-    images: ["/ogp.png"],
+  manifest: "/manifest.json",
+  themeColor: "#1E90FF",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ANZEN",
   },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ja">
-      <body className={noto.className}>{children}</body>
+    <html lang="ja" style={{ height: "100%", margin: 0, padding: 0 }}>
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="ANZEN" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
+
+      <body
+        className={noto.className}
+        style={{
+          height: "100dvh",
+          margin: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Header はそのまま */}
+        <Header title="ANZEN" />
+
+        <main
+          style={{
+            flex: 1,
+            position: "relative",
+            height: "100%",
+            overflowY: "auto",
+          }}
+        >
+          {children}
+        </main>
+      </body>
     </html>
   );
 }

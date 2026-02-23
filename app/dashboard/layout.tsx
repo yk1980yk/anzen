@@ -6,7 +6,11 @@ import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -33,7 +37,6 @@ export default function DashboardLayout({ children }) {
 
       {/* ★ 左サイドバー */}
       <aside className="w-56 bg-white border-r shadow-sm p-4">
-        {/* ← ここにロゴを追加 */}
         <div className="flex items-center mb-6">
           <Image
             src="/logos/logo-header.png"

@@ -1,104 +1,164 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import Header from "../components/Header";
+import ToggleSwitch from "../components/ui/ToggleSwitch";
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState({
-    notificationsEnabled: true,
-    soundEnabled: true,
-    level1: true,
-    level2: true,
-    level3: true,
-  });
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
 
-  // 初期読み込み
+  // ★ 設定項目（4つのモード）
+  const [crimeMode, setCrimeMode] = useState(true);
+  const [rescueMode, setRescueMode] = useState(true);
+  const [sosMode, setSosMode] = useState(true);
+  const [elderMode, setElderMode] = useState(true);
+
+  // ★ 通知設定
+  const [enableNotification, setEnableNotification] = useState(true);
+  const [enableSound, setEnableSound] = useState(true);
+
+  // ★ 危険レベル
+  const [level1, setLevel1] = useState(true);
+  const [level2, setLevel2] = useState(true);
+  const [level3, setLevel3] = useState(true);
+
   useEffect(() => {
-    const saved = localStorage.getItem("anzen-settings");
-    if (saved) {
-      setSettings(JSON.parse(saved));
-    }
+    const load = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+
+        // ★ DB の値を UI に反映
+        setCrimeMode(data.enable_crime_mode ?? true);
+        setRescueMode(data.enable_rescue_mode ?? true);
+        setSosMode(data.enable_sos_mode ?? true);
+        setElderMode(data.enable_elder_mode ?? true);
+      }
+
+      setLoading(false);
+    };
+
+    load();
   }, []);
 
-  // 保存処理（変更のたびに保存）
-  const updateSetting = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    localStorage.setItem("anzen-settings", JSON.stringify(newSettings));
+  // ★ 保存処理
+  const saveSettings = async () => {
+    if (!profile) return;
+
+    await supabase
+      .from("profiles")
+      .update({
+        enable_crime_mode: crimeMode,
+        enable_rescue_mode: rescueMode,
+        enable_sos_mode: sosMode,
+        enable_elder_mode: elderMode,
+      })
+      .eq("id", profile.id);
+
+    alert("設定を保存しました");
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loader-circle"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6 pb-20">
+    <>
+      <Header title="設定" />
 
-      <h1 className="text-2xl font-bold">設定</h1>
+      <div className="fixed inset-0 overflow-y-auto bg-[#FFF8E8] p-6 pt-24 space-y-8 z-[999999999]">
 
-      {/* 通知設定 */}
-      <div className="anzen-card space-y-4">
-        <h2 className="text-lg font-semibold">通知設定</h2>
+        {/* 通知設定 */}
+        <div>
+          <h2 className="text-lg font-bold mb-3">通知設定</h2>
 
-        <label className="flex items-center justify-between">
-          <span>通知を有効にする</span>
-          <input
-            type="checkbox"
-            checked={settings.notificationsEnabled}
-            onChange={(e) => updateSetting("notificationsEnabled", e.target.checked)}
-            className="w-5 h-5"
-          />
-        </label>
+          <div className="flex items-center justify-between mb-4">
+            <span>通知を有効にする</span>
+            <ToggleSwitch
+              value={enableNotification}
+              onChange={setEnableNotification}
+            />
+          </div>
 
-        <label className="flex items-center justify-between">
-          <span>サウンドを有効にする</span>
-          <input
-            type="checkbox"
-            checked={settings.soundEnabled}
-            onChange={(e) => updateSetting("soundEnabled", e.target.checked)}
-            className="w-5 h-5"
-          />
-        </label>
+          <div className="flex items-center justify-between">
+            <span>サウンドを有効にする</span>
+            <ToggleSwitch
+              value={enableSound}
+              onChange={setEnableSound}
+            />
+          </div>
+        </div>
+
+        {/* 危険レベル表示 */}
+        <div>
+          <h2 className="text-lg font-bold mb-3">危険レベルの表示</h2>
+
+          <div className="flex items-center justify-between mb-4">
+            <span>レベル1（注意）</span>
+            <ToggleSwitch value={level1} onChange={setLevel1} />
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <span>レベル2（警告）</span>
+            <ToggleSwitch value={level2} onChange={setLevel2} />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span>レベル3（危険）</span>
+            <ToggleSwitch value={level3} onChange={setLevel3} />
+          </div>
+        </div>
+
+        {/* 表示するモード */}
+        <div>
+          <h2 className="text-lg font-bold mb-3">表示するモード</h2>
+
+          <div className="flex items-center justify-between mb-4">
+            <span>🛡 防犯モード</span>
+            <ToggleSwitch value={crimeMode} onChange={setCrimeMode} />
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <span>🚨 救助要請モード</span>
+            <ToggleSwitch value={rescueMode} onChange={setRescueMode} />
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <span>🗺 遭難モード</span>
+            <ToggleSwitch value={sosMode} onChange={setSosMode} />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span>👵 高齢者見守りモード</span>
+            <ToggleSwitch value={elderMode} onChange={setElderMode} />
+          </div>
+        </div>
+
+        {/* 保存ボタン */}
+        <button
+          onClick={saveSettings}
+          className="w-full p-4 bg-blue-600 text-white rounded-lg font-bold shadow active:scale-95"
+        >
+          保存する
+        </button>
+
       </div>
-
-      {/* 危険レベル表示設定 */}
-      <div className="anzen-card space-y-4">
-        <h2 className="text-lg font-semibold">危険レベルの表示</h2>
-
-        <label className="flex items-center justify-between">
-          <span>レベル 1（注意）</span>
-          <input
-            type="checkbox"
-            checked={settings.level1}
-            onChange={(e) => updateSetting("level1", e.target.checked)}
-            className="w-5 h-5"
-          />
-        </label>
-
-        <label className="flex items-center justify-between">
-          <span>レベル 2（警告）</span>
-          <input
-            type="checkbox"
-            checked={settings.level2}
-            onChange={(e) => updateSetting("level2", e.target.checked)}
-            className="w-5 h-5"
-          />
-        </label>
-
-        <label className="flex items-center justify-between">
-          <span>レベル 3（危険）</span>
-          <input
-            type="checkbox"
-            checked={settings.level3}
-            onChange={(e) => updateSetting("level3", e.target.checked)}
-            className="w-5 h-5"
-          />
-        </label>
-      </div>
-
-      {/* 戻る */}
-      <button
-        onClick={() => history.back()}
-        className="text-blue-600 underline block text-center mt-4"
-      >
-        戻る
-      </button>
-
-    </div>
+    </>
   );
 }

@@ -5,24 +5,36 @@ import { supabase } from '@/lib/supabaseClient'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// ★ users テーブルの型
+type AppUser = {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  created_at: string
+}
+
 // ★ 権限ごとのカード色
-const getRoleStyle = (role) => {
+const getRoleStyle = (role: string) => {
   switch (role) {
     case 'admin':
       return 'border-purple-300 bg-purple-50'
-    case 'user':
-      return 'border-gray-300 bg-white'
-    default:
+    case 'editor':
+      return 'border-blue-300 bg-blue-50'
+    case 'viewer':
       return 'border-gray-300 bg-gray-50'
+    default:
+      return 'border-gray-200 bg-white'
   }
 }
 
 export default function UserDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const id = params.id
+  const id = params.id as string
 
-  const [user, setUser] = useState(null)
+  // ★ 型を AppUser | null にする（これが今回のエラーの原因）
+  const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   // ★ ユーザー情報取得
@@ -35,7 +47,7 @@ export default function UserDetailPage() {
         .single()
 
       if (!error) {
-        setUser(data)
+        setUser(data as AppUser)
       }
 
       setLoading(false)
@@ -81,7 +93,7 @@ export default function UserDetailPage() {
             登録日: {new Date(user.created_at).toLocaleString()}
           </p>
 
-          {/* 将来の機能（BAN / 権限変更）をここに追加できる */}
+          {/* 将来の機能（BAN / 権限変更） */}
           <div className="flex gap-4 mt-4">
             <button
               onClick={() => alert('この機能はまだ実装されていません')}

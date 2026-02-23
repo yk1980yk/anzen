@@ -31,6 +31,7 @@ export default function SosHome() {
 
   return (
     <div className="relative min-h-screen bg-gray-100 p-6 pt-20 flex flex-col items-center">
+
       {/* ★ 共通ヘッダー */}
       <Header title="遭難モード" />
 
@@ -48,10 +49,10 @@ export default function SosHome() {
         />
       </div>
 
-      {/* タイトル（ヘッダーがあるので非表示でもOKだが残す） */}
+      {/* タイトル（ヘッダーがあるので控えめに） */}
       <h1 className="text-2xl font-bold mb-6 mt-6">🗺 遭難モード</h1>
 
-      {/* ナビ開始ボタン（ANZENブルーに統一） */}
+      {/* ナビ開始ボタン（ANZENブルー） */}
       <button
         onClick={() => router.push("/sos/navigation")}
         className="w-64 h-64 rounded-full shadow-xl text-white text-3xl font-bold flex items-center justify-center transition-transform hover:scale-105"
@@ -60,7 +61,7 @@ export default function SosHome() {
         ナビ開始
       </button>
 
-      {/* 下のSOSボタン（赤のまま） */}
+      {/* 下のSOSボタン（赤） */}
       <button
         onClick={() => alert("遭難SOSを送信しました（仮）")}
         className="mt-10 w-full p-5 rounded-lg shadow bg-red-500 text-white font-semibold text-lg"

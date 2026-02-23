@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { User } from '@supabase/supabase-js'   // ★ 追加
 
 export default function SettingsPage() {
   const router = useRouter()
 
-  const [authUser, setAuthUser] = useState(null) // ← Supabase Auth のユーザー
-  const [user, setUser] = useState(null) // ← users テーブルのユーザー
+  // ★ 型を User | null にする
+  const [authUser, setAuthUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null) // users テーブルは任意型でOK
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -24,7 +26,7 @@ export default function SettingsPage() {
         return
       }
 
-      setAuthUser(data.user) // ← email はここに入っている
+      setAuthUser(data.user) // ← OK
 
       // users テーブルから詳細を取得
       const { data: userData } = await supabase
@@ -76,7 +78,7 @@ export default function SettingsPage() {
       {/* プロフィールカード */}
       <div className="anzen-card p-5 space-y-4">
         {/* ★ email は authUser から取得 */}
-        <p className="text-lg font-semibold">{authUser.email}</p>
+        <p className="text-lg font-semibold">{authUser?.email}</p>
 
         <div className="space-y-2">
           <label className="text-sm font-semibold">名前</label>

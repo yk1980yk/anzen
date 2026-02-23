@@ -4,7 +4,22 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
-const levelColors = {
+// DangerArea 型を定義
+type DangerArea = {
+  id: string;
+  title: string;
+  description: string | null;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  level: number;
+  city?: string;
+  created_at: string;
+  display_time?: string | null;
+};
+
+// ★ number で index できるように修正
+const levelColors: Record<number, string> = {
   1: "border-blue-300 bg-blue-50",
   2: "border-green-300 bg-green-50",
   3: "border-yellow-300 bg-yellow-50",
@@ -13,7 +28,8 @@ const levelColors = {
 };
 
 export default function DangerAreasDashboard() {
-  const [areas, setAreas] = useState([]);
+  // ★ useState に型をつける
+  const [areas, setAreas] = useState<DangerArea[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +39,7 @@ export default function DangerAreasDashboard() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      setAreas(data || []);
+      setAreas((data as DangerArea[]) || []);
       setLoading(false);
     };
 

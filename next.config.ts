@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Strict Mode OFF（地図の二重描画を防ぐ）
+  reactStrictMode: false,
 };
 
 export default nextConfig;

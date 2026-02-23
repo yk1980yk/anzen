@@ -20,18 +20,18 @@ export default function NewDangerAreaPage() {
   const [error, setError] = useState("");
 
   // 地図クリック
-  const handleMapClick = (lat, lng) => {
+  const handleMapClick = (lat: number, lng: number) => {
     setLatitude(lat);
     setLongitude(lng);
   };
 
   // 半径ドラッグ
-  const handleRadiusChange = (newRadius) => {
+  const handleRadiusChange = (newRadius: number) => {
     setRadius(newRadius);
   };
 
   // 中心ドラッグ
-  const handleCenterDrag = (lat, lng) => {
+  const handleCenterDrag = (lat: number, lng: number) => {
     setLatitude(lat);
     setLongitude(lng);
   };

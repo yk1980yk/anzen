@@ -95,12 +95,12 @@ export default function EditDangerAreaPage() {
               longitude={longitude}
               radius={radius}
               level={level}
-              onMapClick={(lat, lng) => {
+              onMapClick={(lat: number, lng: number) => {
                 setLatitude(lat);
                 setLongitude(lng);
               }}
-              onRadiusChange={(r) => setRadius(r)}
-              onCenterDrag={(lat, lng) => {
+              onRadiusChange={(r: number) => setRadius(r)}
+              onCenterDrag={(lat: number, lng: number) => {
                 setLatitude(lat);
                 setLongitude(lng);
               }}

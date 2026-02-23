@@ -1,65 +1,39 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+import ModeSwitcher from "@/components/map/ModeSwitcher";
+
+import MapRecenterButton from "@/components/ui/MapRecenterButton";
+
+
+// メインの危険エリアマップ（投稿＋閲覧）
+const MainMap = dynamic(() => import("./MainMap"), { ssr: false });
 
 export default function Home() {
-  const router = useRouter();
+  const [showModes, setShowModes] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-white">
+    <div className="relative" style={{ height: "100dvh" }}>
 
-      {/* ロゴ */}
-      <div className="mb-10 text-center">
-        <img src="/logo.png" alt="ANZEN" className="w-20 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-800">ANZEN</h1>
-        <p className="text-gray-600 mt-2">あなたの安全を、いつでもどこでも。</p>
-      </div>
+      {/* メインのマップ（危険エリア投稿＋閲覧） */}
+      <MainMap />
 
-      {/* メインボタン */}
-      <div className="w-full max-w-sm space-y-4">
+      {/* 現在地ボタン */}
+      <MapRecenterButton
+        onClick={() => window.dispatchEvent(new Event("recenter-map"))}
+      />
 
-        <button
-          onClick={() => router.push("/user-map")}
-          className="anzen-btn-primary"
-        >
-          地図を見る
-        </button>
+      {/* モード切替ボタン（左上） */}
+      <button
+        onClick={() => setShowModes(!showModes)}
+        className="absolute top-4 left-4 bg-white rounded-xl shadow-soft p-3 text-2xl z-[9999]"
+      >
+        🛡
+      </button>
 
-        <button
-          onClick={() => router.push("/dashboard/danger-areas/new")}
-          className="anzen-btn-primary"
-        >
-          危険エリアを投稿
-        </button>
-
-        <button
-          onClick={() => router.push("/mypage")}
-          className="anzen-btn-secondary"
-        >
-          マイページ
-        </button>
-
-      </div>
-
-      {/* サブメニュー */}
-      <div className="mt-10 space-y-3 text-center">
-
-        <button
-          onClick={() => router.push("/settings")}
-          className="text-blue-600 underline"
-        >
-          設定
-        </button>
-
-        <button
-          onClick={() => router.push("/login")}
-          className="text-red-600 underline"
-        >
-          ログアウト
-        </button>
-
-      </div>
-
+      {/* モード切替メニュー */}
+      {showModes && <ModeSwitcher onClose={() => setShowModes(false)} />}
     </div>
   );
 }

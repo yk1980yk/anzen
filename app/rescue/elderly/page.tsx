@@ -1,139 +1,315 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { getLocation } from "@/utils/getLocation";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getLocation } from "@/utils/getLocation";
 import Header from "@/components/Header";
 
 export default function ElderlySOS() {
-  const router = useRouter();
-  const [isFlashing, setIsFlashing] = useState(false);
-  const [isAlarmPlaying, setIsAlarmPlaying] = useState(false);
+  const [holding, setHolding] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [safeSent, setSafeSent] = useState(false);
 
-  // アラーム音
-  const alarmSound =
-    typeof Audio !== "undefined" ? new Audio("/alarm.mp3") : null;
+  // ★ 転倒検知
+  const [fallDetect, setFallDetect] = useState(false);
+  const [fallDialog, setFallDialog] = useState(false);
 
-  // ★ ANZEN ブランドの丸アイコンボタン
-  const ModeButton = ({
-    icon,
-    active,
-    onClick,
-  }: {
-    icon: string;
-    active: boolean;
-    onClick: () => void;
-  }) => (
-    <button
-      onClick={onClick}
-      className={`w-12 h-12 flex items-center justify-center rounded-full shadow-md transition-transform hover:scale-105 ${
-        active ? "bg-blue-500 text-white" : "bg-white text-gray-700"
-      }`}
-      style={{
-        border: active ? "3px solid #1E90FF" : "2px solid #ccc",
-      }}
-    >
-      <span className="text-xl">{icon}</span>
-    </button>
-  );
+  const holdTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // SOS送信
-  const handleSOS = async () => {
+  /* ============================================
+     ★ 助けて（SOS）送信
+  ============================================ */
+  const sendSOS = async () => {
     try {
       const loc = await getLocation();
 
-      const { error } = await supabase.from("sos_logs").insert({
-        mode: "elderly",
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("ログインが必要です");
+        return;
+      }
+
+      await supabase.from("elderly_sos").insert({
+        user_id: user.id,
         lat: loc.lat,
         lng: loc.lng,
       });
 
-      if (error) {
-        alert("Supabase 送信エラー: " + error.message);
-        return;
-      }
-
-      alert(`高齢者SOS送信完了！\n緯度: ${loc.lat}\n経度: ${loc.lng}`);
+      setSent(true);
+      setTimeout(() => setSent(false), 3000);
     } catch (err) {
       alert(err);
     }
   };
 
-  // ライト点滅
-  const toggleFlash = () => {
-    setIsFlashing(!isFlashing);
+  /* ============================================
+     ★ 長押し開始（2秒）
+  ============================================ */
+  const startHold = () => {
+    setHolding(true);
+
+    holdTimer.current = setTimeout(() => {
+      sendSOS();
+      setHolding(false);
+    }, 2000);
   };
 
-  // アラーム
-  const toggleAlarm = () => {
-    if (!alarmSound) return;
+  /* ============================================
+     ★ 長押しキャンセル
+  ============================================ */
+  const cancelHold = () => {
+    setHolding(false);
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+  };
 
-    if (isAlarmPlaying) {
-      alarmSound.pause();
-      alarmSound.currentTime = 0;
-      setIsAlarmPlaying(false);
-    } else {
-      alarmSound.loop = true;
-      alarmSound.play();
-      setIsAlarmPlaying(true);
+  /* ============================================
+     ★ 元気です（安否チェック）
+  ============================================ */
+  const sendSafe = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      await supabase.from("elderly_safe").insert({
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+      });
+
+      setSafeSent(true);
+      setTimeout(() => setSafeSent(false), 2500);
+    } catch (err) {
+      alert(err);
     }
   };
 
-  return (
-    <div
-      className={`relative min-h-screen p-6 pt-20 flex flex-col items-center ${
-        isFlashing ? "flash" : "bg-gray-100"
-      }`}
-    >
-      {/* ★ 共通ヘッダー */}
-      <Header title="高齢者SOS" />
+  /* ============================================
+     ★ 転倒通知送信
+  ============================================ */
+  const sendFallAlert = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      {/* ★ 左上のモード切り替え */}
-      <div className="absolute top-20 left-4 flex space-x-3 z-50">
-        <ModeButton
-          icon="🔥"
-          active={false}
-          onClick={() => router.push("/rescue/disaster")}
-        />
-        <ModeButton
-          icon="👵"
-          active={true}
-          onClick={() => router.push("/rescue/elderly")}
-        />
+    if (!user) return;
+
+    await supabase.from("elderly_fall").insert({
+      user_id: user.id,
+      created_at: new Date().toISOString(),
+    });
+
+    setFallDialog(false);
+  };
+
+  /* ============================================
+     ★ 転倒検知（疑似）
+  ============================================ */
+  useEffect(() => {
+    if (!fallDetect) return;
+
+    let lastAccel = { x: 0, y: 0, z: 0 };
+    let lastTime = Date.now();
+
+    const handleMotion = (event: DeviceMotionEvent) => {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+
+      const now = Date.now();
+      const diff = now - lastTime;
+
+      if (diff < 200) return;
+      lastTime = now;
+
+      const dx = Math.abs(acc.x - lastAccel.x);
+      const dy = Math.abs(acc.y - lastAccel.y);
+      const dz = Math.abs(acc.z - lastAccel.z);
+
+      const magnitude = dx + dy + dz;
+
+      // 高齢者向けに優しめの閾値
+      if (magnitude > 22) {
+        setFallDialog(true);
+      }
+
+      lastAccel = { x: acc.x, y: acc.y, z: acc.z };
+    };
+
+    window.addEventListener("devicemotion", handleMotion);
+
+    return () => {
+      window.removeEventListener("devicemotion", handleMotion);
+    };
+  }, [fallDetect]);
+
+  return (
+    <div className="relative min-h-screen bg-[#FFF8E8] p-6 pt-20 flex flex-col items-center">
+      <Header title="高齢者見守り" />
+
+      {/* ★ 助けて送信完了ポップアップ */}
+      {sent && (
+        <div
+          style={{
+            position: "fixed",
+            top: "30%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "white",
+            padding: "20px 26px",
+            borderRadius: "14px",
+            color: "#D35400",
+            fontSize: "20px",
+            fontWeight: "bold",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            zIndex: 9999,
+            textAlign: "center",
+          }}
+        >
+          🧡 家族に通知しました
+          <div style={{ fontSize: "14px", marginTop: "6px", color: "#555" }}>
+            しばらくその場でお待ちください
+          </div>
+        </div>
+      )}
+
+      {/* ★ 元気ですポップアップ */}
+      {safeSent && (
+        <div
+          style={{
+            position: "fixed",
+            top: "30%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "white",
+            padding: "20px 26px",
+            borderRadius: "14px",
+            color: "#27AE60",
+            fontSize: "20px",
+            fontWeight: "bold",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            zIndex: 9999,
+            textAlign: "center",
+          }}
+        >
+          🟢 元気です を送信しました
+        </div>
+      )}
+
+      {/* ★ 転倒確認ダイアログ */}
+      {fallDialog && (
+        <div
+          style={{
+            position: "fixed",
+            top: "30%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "white",
+            padding: "24px 28px",
+            borderRadius: "14px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
+            zIndex: 9999,
+            textAlign: "center",
+            width: "85%",
+            maxWidth: "360px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: "bold",
+              marginBottom: "10px",
+              color: "#E67E22",
+            }}
+          >
+            転倒しましたか？
+          </div>
+
+          <div style={{ fontSize: "14px", color: "#555", marginBottom: "20px" }}>
+            家族に知らせることができます
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={sendFallAlert}
+              style={{
+                padding: "10px 16px",
+                background: "#E67E22",
+                color: "white",
+                borderRadius: "8px",
+                fontWeight: "bold",
+              }}
+            >
+              はい、通知する
+            </button>
+
+            <button
+              onClick={() => setFallDialog(false)}
+              style={{
+                padding: "10px 16px",
+                background: "#ddd",
+                color: "#333",
+                borderRadius: "8px",
+                fontWeight: "bold",
+              }}
+            >
+              いいえ
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ★ 大きな助けてボタン */}
+      <div
+        onTouchStart={startHold}
+        onTouchEnd={cancelHold}
+        onMouseDown={startHold}
+        onMouseUp={cancelHold}
+        onMouseLeave={cancelHold}
+        className={holding ? "sos-hold" : ""}
+        style={{
+          width: "220px",
+          height: "220px",
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #F5A623, #F76B1C)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "42px",
+          fontWeight: "bold",
+          color: "white",
+          boxShadow: "0 0 20px rgba(247,107,28,0.5)",
+          userSelect: "none",
+          touchAction: "none",
+          marginTop: "40px",
+        }}
+      >
+        助けて
       </div>
 
-      {/* 大きなSOSボタン（ANZENブルー） */}
-      <button
-        onClick={handleSOS}
-        className="w-64 h-64 rounded-full shadow-xl text-white text-4xl font-bold flex items-center justify-center transition-transform hover:scale-105 mt-6"
-        style={{ backgroundColor: "#1E90FF" }}
-      >
-        SOS
-      </button>
+      <p className="mt-4 text-gray-700 font-semibold text-lg">
+        長押しで家族に通知します
+      </p>
 
       {/* 下の操作ボタン */}
       <div className="mt-10 w-full flex flex-col gap-4">
-
-        {/* ライト点滅 */}
+        {/* 元気です */}
         <button
-          onClick={toggleFlash}
-          className="w-full p-4 rounded-lg shadow bg-white text-gray-700 font-semibold"
+          onClick={sendSafe}
+          className="w-full p-4 rounded-lg shadow bg-white text-gray-700 font-semibold text-lg"
         >
-          🔦 ライト点滅（後で実装）
+          🟢 元気です（安否チェック）
         </button>
 
-        {/* アラーム */}
+        {/* 転倒検知 */}
         <button
-          onClick={toggleAlarm}
-          className="w-full p-4 rounded-lg shadow bg-white text-gray-700 font-semibold"
+          onClick={() => setFallDetect(!fallDetect)}
+          className="w-full p-4 rounded-lg shadow bg-white text-gray-700 font-semibold text-lg"
         >
-          🔊 アラーム（後で実装）
-        </button>
-
-        {/* 位置情報送信 */}
-        <button className="w-full p-4 rounded-lg shadow bg-white text-gray-700 font-semibold">
-          📍 位置情報送信（後で実装）
+          ⚠️ 転倒検知 {fallDetect ? "ON" : "OFF"}
         </button>
       </div>
     </div>

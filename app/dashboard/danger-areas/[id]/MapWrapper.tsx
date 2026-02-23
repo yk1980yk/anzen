@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
+import dynamic from "next/dynamic";
 
-const MapView = dynamic(() => import('./MapView'), {
+const MapView = dynamic(() => import("../MapView"), {
   ssr: false,
-})
+});
 
-export default function MapWrapper(props) {
-  return <MapView {...props} />
+export default function MapWrapper(props: any) {
+  return <MapView {...props} />;
 }
