@@ -23,13 +23,31 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ja" style={{ height: "100%", margin: 0, padding: 0 }}>
+      <head>
+        {/* ★ iPhone が PWA と認識するために必須 */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="ANZEN" />
+
+        {/* ★ ホーム画面アイコン（必須） */}
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+
+        {/* ★ PWA manifest */}
+        <link rel="manifest" href="/manifest.json" />
+
+        {/* ★ iOS のズーム抑制（UI がズレない） */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+        />
+      </head>
+
       <body
         className={noto.className}
         style={{
@@ -38,6 +56,7 @@ export default function RootLayout({
           padding: 0,
           display: "flex",
           flexDirection: "column",
+          background: "#fff",
         }}
       >
         <Header title="ANZEN" />
@@ -47,7 +66,7 @@ export default function RootLayout({
             flex: 1,
             position: "relative",
             height: "100%",
-            overflowY: "auto",
+            overflow: "hidden",
           }}
         >
           {children}

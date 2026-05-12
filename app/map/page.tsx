@@ -6,7 +6,9 @@ import { supabase } from "@/lib/supabaseClient";
 import L from "leaflet";
 import Link from "next/link";
 
-// Leaflet を SSR 無効で読み込む
+/* ============================================
+   ★ Leaflet（SSR無効）
+============================================ */
 const MapContainer = dynamic(
   () => import("react-leaflet").then((m) => m.MapContainer),
   { ssr: false }
@@ -24,11 +26,37 @@ const Popup = dynamic(
   { ssr: false }
 );
 
-// useMap はコンポーネント内で dynamic import する
 let UseMapComponent: any = null;
 
 /* ============================================
-   ★ 点滅マーカー（ANZEN版）
+   ★ パトランプアイコン（警察ナビ）
+============================================ */
+const PoliceIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+    <rect x="5" y="9" width="14" height="8" rx="2" fill="#2563EB" />
+    <rect x="9" y="5" width="6" height="6" rx="2" fill="#60A5FA" />
+    <path d="M4 19h16" stroke="#1F2933" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M8 3L7 2" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M16 3L17 2" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M4 7L3 6" stroke="#F97316" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M20 7L21 6" stroke="#F97316" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+/* ============================================
+   ★ 豊島区の交番リスト（デモ用）
+============================================ */
+const policeStations = [
+  { name: "池袋警察署", lat: 35.728926, lng: 139.71038 },
+  { name: "池袋駅東口交番", lat: 35.731235, lng: 139.71399 },
+  { name: "池袋駅西口交番", lat: 35.729444, lng: 139.708333 },
+  { name: "池袋駅北口交番", lat: 35.73202, lng: 139.71077 },
+  { name: "目白駅前交番", lat: 35.72152, lng: 139.70654 },
+  { name: "巣鴨駅前交番", lat: 35.73363, lng: 139.73918 },
+];
+
+/* ============================================
+   ★ 点滅マーカー（災害SOS）
 ============================================ */
 const blinkingIcon = L.divIcon({
   className: "",
@@ -59,7 +87,25 @@ const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number) =>
 };
 
 /* ============================================
-   ★ 現在地ボタン（ANZEN UI）
+   ★ 最寄り交番検索
+============================================ */
+const findNearestPolice = (current: [number, number]) => {
+  let nearest = null;
+  let minDist = Infinity;
+
+  policeStations.forEach((ps) => {
+    const dist = calcDistance(current[0], current[1], ps.lat, ps.lng);
+    if (dist < minDist) {
+      minDist = dist;
+      nearest = ps;
+    }
+  });
+
+  return nearest;
+};
+
+/* ============================================
+   ★ 現在地ボタン
 ============================================ */
 function RecenterButton({
   position,
@@ -99,6 +145,9 @@ function RecenterButton({
   );
 }
 
+/* ============================================
+   ★ メインコンポーネント
+============================================ */
 export default function MapPage() {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [follow, setFollow] = useState(true);
@@ -107,16 +156,13 @@ export default function MapPage() {
   const [recording, setRecording] = useState(false);
   const recordInterval = useRef<NodeJS.Timer | null>(null);
 
-  // ★ 災害SOS一覧（プロフィール JOIN）
   const [disasterSOS, setDisasterSOS] = useState<any[]>([]);
-
-  // ★ 家族一覧（user_id の配列）
   const [familyList, setFamilyList] = useState<string[]>([]);
-
-  // ★ プロフィール未設定バナー
   const [showProfileBanner, setShowProfileBanner] = useState(false);
 
-  // useMap を CSR 時にだけ読み込む
+  /* ============================================
+     ★ useMap を CSR 時に読み込み
+  ============================================ */
   useEffect(() => {
     (async () => {
       const mod = await import("react-leaflet");
@@ -130,13 +176,11 @@ export default function MapPage() {
   useEffect(() => {
     const checkProfile = async () => {
       if (typeof window === "undefined") return;
-
       if (localStorage.getItem("profile_prompt_shown")) return;
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) return;
 
       const { data: profile } = await supabase
@@ -189,14 +233,13 @@ export default function MapPage() {
   };
 
   /* ============================================
-     ★ 家族一覧を取得（approved のみ）
+     ★ 家族一覧取得
   ============================================ */
   useEffect(() => {
     const fetchFamily = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!user) return;
 
       const { data } = await supabase
@@ -214,7 +257,7 @@ export default function MapPage() {
   }, []);
 
   /* ============================================
-     ★ 初回ロード時に災害SOS + profiles を取得
+     ★ 災害SOS取得
   ============================================ */
   useEffect(() => {
     const fetchSOS = async () => {
@@ -232,16 +275,14 @@ export default function MapPage() {
         )
         .order("created_at", { ascending: false });
 
-      if (data) {
-        setDisasterSOS(data);
-      }
+      if (data) setDisasterSOS(data);
     };
 
     fetchSOS();
   }, []);
 
   /* ============================================
-     ★ リアルタイム購読（INSERT）
+     ★ リアルタイム購読
   ============================================ */
   useEffect(() => {
     const channel = supabase
@@ -264,19 +305,16 @@ export default function MapPage() {
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => supabase.removeChannel(channel);
   }, []);
 
   /* ============================================
-     ★ visibility フィルタリング（家族対応）
+     ★ visibility フィルタリング
   ============================================ */
   const filterSOS = (sos: any) => {
     if (!position) return false;
 
     const { visibility, lat, lng, user_id } = sos;
-
     const isFamily = familyList.includes(user_id);
 
     const distance = Math.sqrt(
@@ -296,6 +334,39 @@ export default function MapPage() {
       default:
         return false;
     }
+  };
+
+  /* ============================================
+     ★ 最寄り交番へナビ開始
+  ============================================ */
+  const navigateToPolice = async () => {
+    if (!position) return alert("現在地を取得できません");
+
+    const nearest = findNearestPolice(position);
+    if (!nearest) return alert("交番データが見つかりません");
+
+    const url = `https://router.project-osrm.org/route/v1/foot/${position[1]},${position[0]};${nearest.lng},${nearest.lat}?overview=full&geometries=geojson`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.routes || data.routes.length === 0) {
+      return alert("ルートを取得できませんでした");
+    }
+
+    const route = data.routes[0].geometry;
+
+    if (mapRef.current) {
+      const L = await import("leaflet");
+      const geoJsonLayer = L.geoJSON(route, {
+        style: { color: "#2563EB", weight: 5 },
+      });
+
+      geoJsonLayer.addTo(mapRef.current);
+      mapRef.current.fitBounds(geoJsonLayer.getBounds());
+    }
+
+    alert(`最寄りの交番「${nearest.name}」までのルートを表示しました`);
   };
 
   /* ============================================
@@ -339,7 +410,7 @@ export default function MapPage() {
   ============================================ */
   return (
     <div style={{ height: "100dvh", width: "100%", position: "relative" }}>
-      {/* ★ プロフィール未設定バナー */}
+      {/* プロフィール未設定バナー */}
       {showProfileBanner && (
         <div
           className="notification-banner"
@@ -383,6 +454,7 @@ export default function MapPage() {
         </div>
       )}
 
+      {/* 地図 */}
       {position && (
         <MapContainer
           center={position}
@@ -397,7 +469,7 @@ export default function MapPage() {
           {/* 現在地 */}
           <Marker position={position} />
 
-          {/* ★ 災害SOSマーカー（プロフィール対応） */}
+          {/* 災害SOS */}
           {disasterSOS.filter(filterSOS).map((sos) => {
             const isFamily = familyList.includes(sos.user_id);
             const distance =
@@ -411,7 +483,7 @@ export default function MapPage() {
 
             const avatar =
               sos.profiles?.avatar_url ||
-              "https://cdn-icons-png.flaticon.com/512/456/456212.png"; // ★ 柔らかい丸型シルエット
+              "https://cdn-icons-png.flaticon.com/512/456/456212.png";
 
             return (
               <Marker
@@ -421,7 +493,6 @@ export default function MapPage() {
               >
                 <Popup>
                   <div style={{ fontSize: "14px", lineHeight: "1.4" }}>
-                    {/* アイコン */}
                     <img
                       src={avatar}
                       style={{
@@ -434,7 +505,6 @@ export default function MapPage() {
                       }}
                     />
 
-                    {/* 名前 */}
                     <div style={{ fontSize: "16px", fontWeight: "bold" }}>
                       {name}
                       {isFamily && (
@@ -471,6 +541,7 @@ export default function MapPage() {
             );
           })}
 
+          {/* 現在地ボタン */}
           {UseMapComponent && (
             <RecenterButton
               position={position}
@@ -480,46 +551,87 @@ export default function MapPage() {
         </MapContainer>
       )}
 
-      {/* 記録ボタン */}
-      {!recording ? (
-        <button
-          onClick={startRecording}
-          style={{
-            position: "absolute",
-            bottom: 60,
-            right: 20,
-            zIndex: 1000,
-            padding: "12px 18px",
-            background: "#28a745",
-            color: "white",
-            borderRadius: 8,
-            border: "none",
-            fontSize: 16,
-            fontWeight: "bold",
-          }}
-        >
-          ● 記録開始
-        </button>
-      ) : (
-        <button
-          onClick={stopRecording}
-          style={{
-            position: "absolute",
-            bottom: 60,
-            right: 20,
-            zIndex: 1000,
-            padding: "12px 18px",
-            background: "#dc3545",
-            color: "white",
-            borderRadius: 8,
-            border: "none",
-            fontSize: 16,
-            fontWeight: "bold",
-          }}
-        >
-          ■ 記録終了
-        </button>
-      )}
-    </div>
-  );
-}
+      {/* ★ 警察ナビボタン（パトランプ） */}
+<button
+  onClick={navigateToPolice}
+  style={{
+    position: "absolute",
+    bottom: 140, // ← SOSより上に配置
+    right: 20,
+    zIndex: 1000,
+    width: 60,
+    height: 60,
+    borderRadius: "50%",
+    background: "#2563EB",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+  }}
+>
+  <PoliceIcon />
+</button>
+
+{/* ★ SOSボタン（既存の位置そのまま） */}
+<button
+  style={{
+    position: "absolute",
+    bottom: 60,
+    left: 20,
+    zIndex: 1000,
+    width: 80,
+    height: 80,
+    borderRadius: "50%",
+    background: "#dc2626",
+    color: "white",
+    fontSize: 22,
+    fontWeight: "bold",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+  }}
+>
+  SOS
+</button>
+
+{/* ★ 記録ボタン */}
+{!recording ? (
+  <button
+    onClick={startRecording}
+    style={{
+      position: "absolute",
+      bottom: 60,
+      right: 20,
+      zIndex: 1000,
+      padding: "12px 18px",
+      background: "#28a745",
+      color: "white",
+      borderRadius: 8,
+      border: "none",
+      fontSize: 16,
+      fontWeight: "bold",
+    }}
+  >
+    ● 記録開始
+  </button>
+) : (
+  <button
+    onClick={stopRecording}
+    style={{
+      position: "absolute",
+      bottom: 60,
+      right: 20,
+      zIndex: 1000,
+      padding: "12px 18px",
+      background: "#dc3545",
+      color: "white",
+      borderRadius: 8,
+      border: "none",
+      fontSize: 16,
+      fontWeight: "bold",
+    }}
+  >
+    ■ 記録終了
+  </button>
+)}
